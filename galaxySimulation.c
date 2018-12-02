@@ -25,14 +25,21 @@
 #endif
 
 GLfloat position = 1.0;
+static int i;
+static int numStars = 100;
 
 typedef struct {
   GLfloat x;
   GLfloat y;
   GLfloat z;
   GLfloat mass;
-  GLfloat velocity;
+  GLfloat xVelocity;
+  GLfloat yVelocity;
+  GLfloat zVelocity;
 } Star;
+
+#define MAX_STARS 1000
+Star starArray[MAX_STARS];
 
 // Display list for coordinate axis 
 GLuint axisList;
@@ -42,15 +49,35 @@ int axisEnabled= 1;
 
 ///////////////////////////////////////////////
 
-double myRandom()
-//Return random double within range [0,1]
+GLfloat myRandom()
+//Return random GLfloat within range [-1,1]
 {
-  return (rand()/(double)RAND_MAX);
+  return ((rand()/(GLfloat)RAND_MAX)*2)-1;
 }
 
-void updatePosition(void) {
-  position += 1.0;
+void updatePosition(void)
+{
+  for (i=0; i<numStars; i++)
+  {
+    starArray[i].x += starArray[i].xVelocity;
+    starArray[i].y += starArray[i].yVelocity;
+    starArray[i].z += starArray[i].zVelocity;
+  }
   glutPostRedisplay();
+}
+
+void initStarArray(void)
+{
+  for (i=0; i<numStars; i++)
+  {
+    starArray[i].x = 0;
+    starArray[i].y = 0;
+    starArray[i].z = 0;
+    starArray[i].xVelocity = 0.1 * myRandom();
+    starArray[i].yVelocity = 0.1 * myRandom();
+    starArray[i].zVelocity = 0.1 * myRandom();
+    starArray[i].mass = 1;
+  }
 }
 
 ///////////////////////////////////////////////
@@ -67,13 +94,13 @@ void display()
   if(axisEnabled) glCallList(axisList);
 
   glColor3f(1.0, 0.0, 0.0);
-  glPointSize(20.0);
+  glPointSize(1.0);
 
   glBegin(GL_POINTS);
-    glVertex3f(0.0, 0.0, 0.0);
-    glVertex3f(position, 0.0, 0.0);
-    glVertex3f(0.0, position, 0.0);
-    glVertex3f(0.0, 0.0, position);
+    for (i=0; i<numStars; i++)
+    {
+      glVertex3f(starArray[i].x, starArray[i].y, starArray[i].z);
+    }
   glEnd();
 
   glutSwapBuffers();
@@ -84,6 +111,7 @@ void display()
 void keyboard(unsigned char key, int x, int y)
 {
   if(key == 27) exit(0);
+  if (key == 32) initStarArray();
   glutPostRedisplay();
 }
 
@@ -139,6 +167,7 @@ void initGraphics(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
   double f;
+  initStarArray();
   srand(time(NULL));
   initGraphics(argc, argv);
   glEnable(GL_POINT_SMOOTH);
